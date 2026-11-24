@@ -196,6 +196,8 @@ struct ContentView: View {
                 libraryOverviewSection
                 librarySpotlightSection
                 libraryFilterSection
+                libraryArtistsSection
+                libraryAlbumsSection
                 allSongsSection
                 playlistsSection
             }
@@ -1022,6 +1024,80 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    private var libraryArtistsSection: some View {
+        Section("Artists") {
+            if library.artists.isEmpty {
+                EmptyView()
+            } else {
+                ForEach(library.artists, id: \.self) { artist in
+                    DisclosureGroup(
+                        isExpanded: .constant(false)
+                    ) {
+                        let items = library.songs(by: artist)
+                        let playableQueue = library.playableItems(items)
+                        ForEach(items, id: \.persistentID) { item in
+                            trackRow(item, queue: playableQueue)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "mic.fill")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(EW27Design.accent)
+                            Text(artist)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text("\(itemsCount(for: artist))")
+                                .font(.caption2.monospacedDigit().weight(.bold))
+                                .opacity(0.72)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var libraryAlbumsSection: some View {
+        Section("Albums") {
+            if library.albums.isEmpty {
+                EmptyView()
+            } else {
+                ForEach(library.albums, id: \.self) { album in
+                    DisclosureGroup(
+                        isExpanded: .constant(false)
+                    ) {
+                        let items = library.songs(in: album)
+                        let playableQueue = library.playableItems(items)
+                        ForEach(items, id: \.persistentID) { item in
+                            trackRow(item, queue: playableQueue)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.stack.fill")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(EW27Design.accent)
+                            Text(album)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text("\(itemsCount(forAlbum: album))")
+                                .font(.caption2.monospacedDigit().weight(.bold))
+                                .opacity(0.72)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func itemsCount(for artist: String) -> Int {
+        library.songs(by: artist).count
+    }
+
+    private func itemsCount(forAlbum album: String) -> Int {
+        library.songs(in: album).count
     }
 
     private func trackRow(_ item: MPMediaItem, queue: [MPMediaItem]) -> some View {

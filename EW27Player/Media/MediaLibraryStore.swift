@@ -42,4 +42,25 @@ final class MediaLibraryStore: ObservableObject {
     func playableItems(_ items: [MPMediaItem]) -> [MPMediaItem] {
         items.filter { $0.assetURL != nil }
     }
+
+    // Unique album titles and artist names for library browsing (BitChord-style sections).
+    var albums: [String] {
+        Dictionary(grouping: allSongs, by: { $0.albumTitle ?? "Unknown Album" })
+            .keys
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    var artists: [String] {
+        Dictionary(grouping: allSongs, by: { $0.artist ?? "Unknown Artist" })
+            .keys
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    func songs(in album: String) -> [MPMediaItem] {
+        allSongs.filter { ($0.albumTitle ?? "Unknown Album") == album && $0.assetURL != nil }
+    }
+
+    func songs(by artist: String) -> [MPMediaItem] {
+        allSongs.filter { ($0.artist ?? "Unknown Artist") == artist && $0.assetURL != nil }
+    }
 }
