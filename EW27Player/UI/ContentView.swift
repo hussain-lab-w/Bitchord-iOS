@@ -14,6 +14,7 @@ struct ContentView: View {
     @AppStorage("ew27.vinyl.enabled") private var vinylMode = false
     @State private var showLyrics = false
     @State private var showPlaybackSettings = false
+    @State private var showNowPlayingLyricsBar = false
     @State private var albumArtMotion = false
     @State private var dockVisible = true
     @State private var lastScrollOffset: CGFloat = 0
@@ -537,6 +538,9 @@ struct ContentView: View {
                             deckTransport
                                 .padding(.top, 2)
                             deckActionRow
+                            if showNowPlayingLyricsBar {
+                                nowPlayingLyricsBar
+                            }
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 12)
@@ -769,11 +773,43 @@ struct ContentView: View {
                 showQueue = true
             }
             Spacer(minLength: 0)
+            actionButton("text.bubble.fill", label: "Live Lyrics", active: showNowPlayingLyricsBar) {
+                showNowPlayingLyricsBar.toggle()
+            }
+            .disabled(player.currentItem == nil)
+            Spacer(minLength: 0)
             actionButton("shuffle", label: "Shuffle", active: player.shuffleEnabled) {
                 player.shuffleEnabled.toggle()
             }
         }
         .padding(.horizontal, 30)
+    }
+
+    /// Live synced-lyrics strip pinned over the bottom of Now Playing,
+    /// like Apple Music's full-screen player — shows the line being sung now.
+    private var nowPlayingLyricsBar: some View {
+        VStack(spacing: 0) {
+            Divider().background(EW27Design.primaryText.opacity(0.08))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(player.currentItem?.title ?? "")
+                    .font(EW27Type.caption)
+                    .foregroundStyle(EW27Design.primaryText.opacity(0.72))
+                TimelineView(.periodic(from: .now, by: 0.2)) { timeline in
+                    Text(miniSubtitle(at: timeline.date))
+                        .font(EW27Type.row)
+                        .foregroundStyle(EW27Design.accent)
+                        .lineLimit(2)
+                        .contentTransition(.opacity)
+                        .animation(reduceMotion ? nil : Motion.crossfade, value: miniSubtitle(at: timeline.date))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+        }
+        .background(Color.black.opacity(0.55))
+        .transition(Motion.slide)
+        .animation(reduceMotion ? nil : Motion.transition, value: showNowPlayingLyricsBar)
     }
 
     private func actionButton(_ symbol: String, label: String, active: Bool, action: @escaping () -> Void) -> some View {
